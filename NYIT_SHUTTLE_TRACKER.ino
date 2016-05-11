@@ -22,12 +22,30 @@ float latitude, longitude, speed_kph, heading, altitude;
 #define FONA_TX     3
 #define FONA_RST    4
 
-//FONA GPRS configuration
+// the number of the pushbutton pin, crossreference to the GPS/GSM shield to previent conflicts on the digital pin
+const int buttonPin = 6; 
+const int buttonPin1 = 7;
+const int buttonPin2 = 9;
+const int buttonPin3 = 10;
+const int buttonPin4 = 11;
+const int buttonPin5 = 12;
+
+// variable for reading the pushbutton status
+int buttonState = 0;         
+int buttonState1 = 0;
+int buttonState2 = 0;
+int buttonState3 = 0;
+int buttonState4 = 0;
+int buttonState5 = 0;
+
+String bus_direction;
+
+//FONA GPRS configuration, you will have to contact your SIM provider to find these details
 #define FONA_APN        "wholesale"
 #define FONA_USERNAME   ""
 #define FONA_PASSWORD   ""
 
-//Server Configuration
+//Server/backend Configuration
 #define SERVER          "104.143.38.56"
 #define SERVERPORT      8124
 
@@ -42,7 +60,11 @@ Adafruit_FONA fona = Adafruit_FONA(FONA_RST);
 
 
 void setup() {
-  // put your setup code here, to run once:
+
+  pinMode(buttonPin, INPUT);
+  pinMode(buttonPin1, INPUT);
+  pinMode(buttonPin2, INPUT);
+
 
   // Initialize serial output.
   Serial.begin(115200);
@@ -57,7 +79,7 @@ void setup() {
   fonaSS.println("AT+CMEE=2");
   Serial.println(F("FONA is OK"));
 
-  // Wait for FONA to connect to cell network (up to 8 seconds, then watchdog reset).
+  // Wait for FONA to connect to cell network, you might have to adjust this depending on your network and service area
   Serial.println(F("Checking for network..."));
   while (fona.getNetworkStatus() != 1) {
    delay(500);
@@ -82,7 +104,7 @@ void setup() {
   }
   Serial.println(F("Connected to Cellular!"));
 
-    // Initial GPS read
+  // Initial GPS read, intial results might be noisy if there is no gps fix
   bool gpsFix = fona.getGPS(&latitude, &longitude, &speed_kph, &heading, &altitude);
   initialLatitude = latitude;
   initialLongitude = longitude;
@@ -98,6 +120,82 @@ void setup() {
 
 
 void loop() {
+
+  //Intiate buttons to digital pin assignments
+  //WARNING: make sure to use different digital pins from the FONA GPS/GSM module
+  
+  buttonState = digitalRead(buttonPin);
+  buttonState1 = digitalRead(buttonPin1);
+  buttonState2 = digitalRead(buttonPin2);
+  buttonState3 = digitalRead(buttonPin3);
+  buttonState4 = digitalRead(buttonPin4);
+  buttonState5 = digitalRead(buttonPin5);
+
+   // check if the pushbutton is pressed.
+  // if it is, the buttonState is HIGH, and pass data to the data to be sent
+
+  if (buttonState == HIGH) {
+    // turn LED on:
+    //digitalWrite(ledPin, HIGH);
+    Serial.println(F("Shuttle is Heading to N20 BUS STOP"));
+    bus_direction = "Shuttle is Heading to N20 BUS STOP";
+    delay(1000);
+
+  }
+
+    if (buttonState1 == HIGH) {
+    // turn LED on:
+    //digitalWrite(ledPin, HIGH);
+    Serial.println(F("Shuttle is Heading to Anna Rubin"));
+    bus_direction = "Shuttle is Heading to Anna Rubin";
+    delay(1000);
+
+    }
+
+    if (buttonState2 == HIGH) {
+    // turn LED on:
+    //digitalWrite(ledPin, HIGH);
+    Serial.println(F("Shuttle is Heading to NYCOM"));
+    bus_direction = "Shuttle is Heading to NYCOM";
+    delay(1000);
+
+    }
+
+    if (buttonState3 == HIGH) {
+    // turn LED on:
+    //digitalWrite(ledPin, HIGH);
+    Serial.println(F("Shuttle is Heading to Educational Hall"));
+    bus_direction = "Shuttle is Heading to Educational Hall";
+    delay(1000);
+
+    }
+
+    if (buttonState4 == HIGH) {
+    // turn LED on:
+   // digitalWrite(ledPin, HIGH);
+    Serial.println(F("Shuttle is Heading to De Seversky"));
+    bus_direction = "Shuttle is Heading to De Seversky";
+    delay(1000);
+
+    }
+
+    if (buttonState5 == HIGH) {
+    // turn LED on:
+    //digitalWrite(ledPin, HIGH);
+    Serial.println(F("Shuttle is on break"));
+    bus_direction = "Shuttle is on break";
+    delay(1000);
+
+    } 
+    
+    else {
+    // turn LED off:
+    //digitalWrite(ledPin, LOW);
+
+
+  
+    
+  }
   // put your main code here, to run repeatedly:
   float latitude, longitude, speed_kph, heading, altitude;
   bool gpsFix = fona.getGPS(&latitude, &longitude, &speed_kph, &heading, &altitude);
@@ -118,16 +216,17 @@ void loop() {
 
   String current_latitude = "";
   String current_longitude = "";
-  String current_heading = "";
+  String current_heading = bus_direction;
   String current_lat_long = "";
+ 
   
 
   current_latitude+=String(int(latitude))+ "."+String(getDecimal(latitude));
   current_longitude+=String(int(longitude))+ "."+String(getDecimal(longitude));
-  current_heading+=String(int(heading))+ "."+String(getDecimal(heading));
+  //current_heading+=String(int(heading))+ "."+String(getDecimal(heading));
   current_lat_long = bus_id + "," + current_heading + "," + current_latitude + "," + current_longitude;
 
-  Serial.print("Cordinates: " + current_latitude + ", " + current_longitude );
+  Serial.print("Cordinates: " + bus_id + current_latitude + ", " + current_longitude );
   Serial.println("");
   
   
@@ -153,6 +252,7 @@ void halt(const __FlashStringHelper *error) {
     delay(100);
   }
 }
+
 
 void printFloat(float value, int places) {
   // this is used to cast digits 
@@ -222,9 +322,9 @@ void post(String message) {
   uint16_t statuscode; 
   int16_t length;
   char url[] = "http://104.143.38.56:8124";
-  char data[80];
+  char data[160];//modify this data length to handle the data you want to send
 
-  message.toCharArray(data, 80);
+  message.toCharArray(data, 160);
 
   flushSerial();
   Serial.println(url);
